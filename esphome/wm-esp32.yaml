@@ -23,7 +23,7 @@ substitutions:
 
   ## device settings
   device_name_short: "water-meter-esp"
-  device_description: "Wasserzähler ESP32, CUL - CC1101, IZAR module (Diehl IZAR RC 868 I R4 PL (SzczepanLeon) my Watermeter"
+  device_description: "Watermeter ESP32, CUL - CC1101, IZAR module (Diehl IZAR RC 868 I R4)"
   projectname: "Diehl IZAR RC 868.Watermeter"
   friendly_name: "Watermeter" # device name
   appversion: "2.0.9"
@@ -131,11 +131,11 @@ backup:
 ## ---------------------------------------------------
 ## COMPONENT SYSLOG SERVICE ENABLED
 ## ---------------------------------------------------
-syslog:
-  ip_address: !secret syslog_server
-  port: !secret syslog_port
-  min_level: DEBUG
-  enable_logger: true
+# syslog:
+#   ip_address: !secret syslog_server
+#   port: !secret syslog_port
+#   min_level: DEBUG
+#   enable_logger: false
 
 ## ---------------------------------------------------
 ## COMPONENT LOGGER
@@ -222,31 +222,23 @@ globals:
   - id: alarm_error_text
     type: std::vector<std::string>
     restore_value: no
-    # initial_value: '{"no error", "general_alarm","leakage","meter_blocked","back_flow","underflow","overflow","submarine","sensor_fraud","mechanical_fraud"}'
-    initial_value: '{"Keiner", "Fehler","Zähler undicht","Zähler blockiert","Wasser Rückfluss","Wasser Unterlauf","Wasser Überlauf","Überschwemung","Sensor Fehler", "Mechanischer Fehler"}'
+    initial_value: '{"no error", "general_alarm","leakage","meter_blocked","back_flow","underflow","overflow","submarine","sensor_fraud","mechanical_fraud"}'
+    #initial_value: '{"Keiner", "Fehler","Zähler undicht","Zähler blockiert","Wasser Rückfluss","Wasser Unterlauf","Wasser Überlauf","Überschwemung","Sensor Fehler", "Mechanischer Fehler"}'
 
   - id: cc1101_state_message
     type: std::vector<std::string>
     restore_value: no
-    initial_value: '{"Init", "Warte auf Daten", "Daten empfangem", "Ready", "Error"}'
+    #initial_value: '{"Init", "Warte auf Daten", "Daten empfangem", "Ready", "Error"}'
+    initial_value: '{"Init", "Waiting for data", "Data received", "Ready", "Error"}'
 
 ## ---------------------------------------------------
 ## WIFI Settings
 ## ---------------------------------------------------
 wifi:
   networks:
-   # unifi accesspoint 2.4Ghz
-    - ssid: !secret ssid4_name
-      password: !secret ssid4_pswd
-      priority: 1
-    # office apple capsulate accesspoint 2.4Ghz
-    - ssid: !secret ssid3_name
-      password: !secret ssid3_pswd
-      priority: 2
-    # living room apple capsulate accesspoint 2.4Ghz
-    - ssid: !secret ssid2_name
-      password: !secret ssid2_pswd
-      priority: 3
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+      priority: 0
   domain: !secret domain
   ap:
     # ssid (Optional, string): The name of the access point to create. Leave empty to use the device name.
@@ -304,7 +296,7 @@ ota:
 web_server:
   port: 80
   version: 2
-  js_url: !secret webserver_jsurl
+  js_url: !secret webserver2_jsurl
 
 ## ---------------------------------------------------
 ## COMPONENT Home Assistant API
@@ -429,7 +421,6 @@ time:
     id: time_sntp
     timezone: Europe/Berlin
     servers:
-      - !secret local_sntp
       - 0.at.pool.ntp.org
       - 0.pool.ntp.org
     on_time_sync:
@@ -645,7 +636,7 @@ binary_sensor:
 
   # simulate led state (updated by id: "waterdisplay")
   - platform: template
-    name: "Wasseruhr Status Led"
+    name: "Watermeter Status Led"
     id: statusled
     icon: mdi:led-outline
     entity_category: "diagnostic"
@@ -697,7 +688,7 @@ sensor:
     # week_value, month_value, year_value and watermeter_lastupdate
     total_water_m3:
       id: "waterdisplay"
-      name: "Wasseruhr Anzeige"
+      name: "Watermeter Display"
       unit_of_measurement: "m³"
       state_class: total_increasing
       device_class: "water"
@@ -768,7 +759,7 @@ sensor:
 
     # water current month (wM-Bus v2.1.4)
     current_month_total_water_l:
-      name: Wasser Monat
+      name: Water Month
       id: "watermonth"
       accuracy_decimals: 2
       unit_of_measurement: "L"
@@ -778,7 +769,7 @@ sensor:
 
     # get the last month total watermter m3 from the wmbus telegram  (wM-Bus 2.1.10)
     last_month_total_water_m3:
-      name: "Wasseruhr Anzeige letzter Monat"
+      name: "Watermeter Display Last Month"
       id: "waterdisplay_lastmonth"
       unit_of_measurement: "m³"
       state_class: total_increasing
@@ -788,17 +779,17 @@ sensor:
 
     # get the battery life time (wM-Bus v2.1.4)
     remaining_battery_life_y:
-      name: "Wasseruhr Batterielebensdauer"
+      name: "Watermeter Battery Life"
       id: "watermeter_batterie"
       accuracy_decimals: 2
-      unit_of_measurement: "Jahre"
+      unit_of_measurement: "y"
       state_class: "measurement"
       entity_category: "diagnostic"
       icon: mdi:battery
 
     # get the last transmit periode (wM-Bus v2.1.4)
     transmit_period_s:
-      name: "Wasseruhr Update Intervall"
+      name: "Watermeter Transmit Period"
       id: "watermeter_transmit_periode"
       unit_of_measurement: "sec"
       state_class: "measurement"
@@ -810,7 +801,7 @@ sensor:
     ## see: id: watermeter_alarm_message
     current_alarms:
       id: "watermeter_current_alarms"
-      name: "Wasseruhr Alarm Code"
+      name: "Watermeter Current Alarm"
       entity_category: "diagnostic"
       icon: mdi:message-alert-outline
       on_value:
@@ -840,7 +831,7 @@ sensor:
     ## see: id: watermeter_alarm_perv_message
     previous_alarms:
       id: "watermeter_previous_alarms"
-      name: "Wasseruhr Alarm Code voriger"
+      name: "Watermeter Previous Alarm Code"
       icon: mdi:message-alert
       entity_category: "diagnostic"
       on_value:
@@ -871,7 +862,7 @@ sensor:
 
   # water current (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Aktuell
+    name: Water Current
     id: "watercurrent"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -882,7 +873,7 @@ sensor:
 
   # water current hour (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Stunde
+    name: Water Hour
     id: "waterhour"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -893,7 +884,7 @@ sensor:
 
   # water today (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Tag
+    name: Water Day
     id: "waterday"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -904,7 +895,7 @@ sensor:
 
   # water yesterday (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Gestern
+    name: Water Yesterday
     id: "wateryesterday"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -915,7 +906,7 @@ sensor:
 
   # water current week (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Woche
+    name: Water Week
     id: "waterweek"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -926,7 +917,7 @@ sensor:
 
   # water last month (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser letzer Monat
+    name: Water Last Month
     id: "waterlastmonth"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -936,7 +927,7 @@ sensor:
 
   # water current year (updated by id: "waterdisplay")
   - platform: template
-    name: Wasser Jahr
+    name: Water Year
     id: "wateryear"
     accuracy_decimals: 2
     unit_of_measurement: "L"
@@ -946,7 +937,7 @@ sensor:
 
   # service call delay (updated by id: "waterdisplay")
   - platform: template
-    name: Wasseruhr Daten Intervall
+    name: Watermeter Update Interval
     id: watermeter_read_timeout
     icon: mdi:clock-start
     accuracy_decimals: 2
@@ -1004,7 +995,7 @@ sensor:
 
   # Uptime device in hours
   - platform: uptime
-    name: "${friendly_name} Online seit"
+    name: "${friendly_name} Uptime"
     id: uptime_human
     icon: mdi:clock-start
     filters:
@@ -1045,7 +1036,7 @@ switch:
 
   # reset all global vars
   - platform: template
-    name: "Wasseruhr Reset values"
+    name: "Watermeter Reset values"
     icon: mdi:lock-reset
     turn_on_action:
       then:
@@ -1085,28 +1076,28 @@ text_sensor:
 
   # watermeter status message (updated by script: set_status_message)
   - platform: template
-    name: "Wasseruhr Status Info"
+    name: "Watermeter Status Info"
     id: watermeter_status_message
     icon: mdi:bell
     entity_category: "diagnostic"
 
   # watermeter alarm message (updated by id: current_alarms)
   - platform: template
-    name: "Wasseruhr Alarm"
+    name: "Watermeter Alarm"
     id: watermeter_alarm_message
     icon: mdi:alarm-light
     entity_category: "diagnostic"
 
   # watermeter previous alarm message (updated by id: current_prev_alarms)
   - platform: template
-    name: "Wasseruhr Alarm voriger"
+    name: "Watermeter Previous Alarm"
     id: watermeter_alarm_perv_message
     icon: mdi:alarm-light
     entity_category: "diagnostic"
 
   # watermeter alarm timestamp (updated by id: current_alarms)
   - platform: template
-    name: "Wasseruhr Alarm Zeit"
+    name: "Watermeter Alarm Timestamp"
     id: watermeter_alarm_timestamp
     icon: mdi:alarm-light
     entity_category: "diagnostic"
